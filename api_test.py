@@ -17,6 +17,7 @@ def get_address_Id():
 
     # Given a match, get the object Id of the address
     prop_dict = response.json()
+    print(prop_dict)
     prop_details = prop_dict['adressen']
     prop_details_dict = dict(prop_details[0])
 
