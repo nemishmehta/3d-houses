@@ -52,6 +52,9 @@ get_xy_bounds()
 x = 104994.91
 y = 192612.04
 
+#x = 178557.426
+#y = 176633.996
+
 tif_file = get_final_tif()
 
 print(tif_file)

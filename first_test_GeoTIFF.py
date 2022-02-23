@@ -10,11 +10,41 @@ import plotly.graph_objects as go
 # Crop part of a TIF image --> this info should come from x,y coordinates of prop of interest
 x_center = 104994.91
 y_center = 192612.04
+"""
+# Method 2 of clipping a raster file
+N = 40
+
+with rasterio.open(
+        '/home/nemish/BeCode/BeCode_Projects/3d-houses/data/DHMVIIDSMRAS1m_k22.zip/GeoTIFF/DHMVIIDSMRAS1m_k22.tif'
+) as src:
+    px, py = src.index(x_center, y_center)
+    print(f'Pixel X, Y coordinates: {px, py}')
+
+    window = rasterio.windows.Window(px - N // 2, py - N // 2, N, N)
+    print(window)
+
+    clip = src.read(1, window=window)
+
+# Faster way of generating 3D model. Don't need to save as a new TIF file.
+df = pd.DataFrame(clip)
+
+# Plot in 3D <-- see Method 2 in Playing with cropped image.py file.
+fig = go.Figure(data=[go.Surface(z=df.values)])
+fig.show()
+"""
+
+# Method 1 of clipping a raster file
 
 xmin = x_center - 40
 xmax = x_center + 40
 ymin = y_center - 40
 ymax = y_center + 40
+"""
+xmin = 178557.426
+xmax = 178558.870
+ymin = 176633.996
+ymax = 176640.996
+"""
 
 
 def window_from_extent(xmin, xmax, ymin, ymax, aff):
@@ -40,14 +70,16 @@ with rasterio.open(
 
     # Remove transform key-value pair because the affine key already exists <-- not required
     #meta.pop('transform', None)
-
-# Save arr in a new tif file
 """
+# Save arr in a new tif file
+
 with rasterio.open('Test.tif', 'w', **meta) as dst:
     dst.write(arr, 1)
 """
+
 # Faster way of generating 3D model. Don't need to save as a new TIF file.
 df = pd.DataFrame(arr)
+print(df)
 
 # Plot in 3D <-- see Method 2 in Playing with cropped image.py file.
 fig = go.Figure(data=[go.Surface(z=df.values)])
