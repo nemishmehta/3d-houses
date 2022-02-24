@@ -9,7 +9,7 @@ def get_xy_bounds():
     """
     for i in range(1, 10):
         with rasterio.open(
-                f'data/DHMVIIDSMRAS1m_k0{i}.zip/GeoTIFF/DHMVIIDSMRAS1m_k0{i}.tif'
+                f'data/DSM/DHMVIIDSMRAS1m_k0{i}.zip/GeoTIFF/DHMVIIDSMRAS1m_k0{i}.tif'
         ) as src:
             up_left = src.transform * (0, 0)
             bot_right = src.transform * (src.width, src.height)
@@ -19,7 +19,7 @@ def get_xy_bounds():
 
     for i in range(10, 44):
         with rasterio.open(
-                f'data/DHMVIIDSMRAS1m_k{i}.zip/GeoTIFF/DHMVIIDSMRAS1m_k{i}.tif'
+                f'data/DSM/DHMVIIDSMRAS1m_k{i}.zip/GeoTIFF/DHMVIIDSMRAS1m_k{i}.tif'
         ) as src:
             # This code will be used to iterate over all DSM files
             up_left = src.transform * (0, 0)
@@ -49,11 +49,19 @@ get_xy_bounds()
 #y = 222802.63
 
 # St-Pietersabdij
-x = 104994.91
-y = 192612.04
+#x = 104994.91
+#y = 104994.91 192612.04
 
-#x = 178557.426
-#y = 176633.996
+# Zuidstationstraat 48, 9000 Gent
+#x = 105327.33
+#y = 193356.96
+
+# BeCentral --> not available in CaPa file
+#x = 149197.74
+#y = 170563.7
+
+x = 218680.5
+y = 179678.7
 
 tif_file = get_final_tif()
 
