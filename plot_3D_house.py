@@ -35,7 +35,7 @@ def get_xy_bounds_tif_files():
         ) as src:
             up_left = src.transform * (0, 0)
             bot_right = src.transform * (src.width, src.height)
-            xy_bounds_dict[f'DHMVIIDSMRAS1m_k0{i}.tif'] = [
+            xy_bounds_dict[f'0{i}'] = [
                 up_left[0], bot_right[0], bot_right[1], up_left[1]
             ]
 
@@ -46,7 +46,7 @@ def get_xy_bounds_tif_files():
             # This code will be used to iterate over all DSM files
             up_left = src.transform * (0, 0)
             bot_right = src.transform * (src.width, src.height)
-            xy_bounds_dict[f'DHMVIIDSMRAS1m_k{i}.tif'] = [
+            xy_bounds_dict[f'{i}'] = [
                 up_left[0], bot_right[0], bot_right[1], up_left[1]
             ]
 
@@ -83,18 +83,14 @@ def get_plot_area_shape(x, y):
     return plot_surface, x_min, y_min, x_max, y_max
 
 
-def get_3D_model(tif_file, x_min_prop, x_max_prop, y_min_prop, y_max_prop,
-                 address, plot_surface):
-    """
-    Use property bounds to plot it in 3D model 
-    """
+def get_cropped_area(file_type, tif_file, x_min_prop, x_max_prop, y_min_prop,
+                     y_max_prop):
     with rasterio.open(
-            f'data/DSM/{tif_file[:-4]}.zip/GeoTIFF/{tif_file}') as src:
-        aff = src.transform
-        meta = src.meta.copy()
+            f'data/{file_type}/DHMVII{file_type}RAS1m_k{tif_file}.zip/GeoTIFF/DHMVII{file_type}RAS1m_k{tif_file}.tif'
+    ) as src:
 
-        col_start, row_start = ~aff * (x_min_prop, y_max_prop)
-        col_stop, row_stop = ~aff * (x_max_prop, y_min_prop)
+        row_start, col_start = src.index(x_min_prop, y_max_prop)
+        row_stop, col_stop = src.index(x_max_prop, y_min_prop)
 
         window = ((int(row_start), int(row_stop)), (int(col_start),
                                                     int(col_stop)))
@@ -102,17 +98,20 @@ def get_3D_model(tif_file, x_min_prop, x_max_prop, y_min_prop, y_max_prop,
         # Read croped array
         arr = src.read(1, window=window)
 
-        # Update dataset metadata (if you need it)
-        meta.update(height=window[0][1] - window[0][0],
-                    width=window[1][1] - window[1][0],
-                    transform=src.window_transform(window))
+        return arr
 
-        df_cropped = pd.DataFrame(arr)
 
-        fig = go.Figure(data=[go.Surface(z=df_cropped.values)])
-        fig.update_layout(
-            title=f'Address: {address},   Plot surface: {plot_surface} m2')
-        fig.show()
+def get_3D_model(dsm_arr, dtm_arr, address, plot_surface):
+    """
+    Use DSM & DTM arrays to plot a 3D model 
+    """
+    chm_arr = dsm_arr - dtm_arr
+    df_cropped = pd.DataFrame(chm_arr)
+
+    fig = go.Figure(data=[go.Surface(z=df_cropped.values)])
+    fig.update_layout(
+        title=f'Address: {address},   Plot surface: {plot_surface} m2')
+    fig.show()
 
 
 address = input('Enter your address: ')
@@ -126,5 +125,10 @@ print('The TIF file for this property is: ', tif_file)
 plot_surface, x_min_prop, y_min_prop, x_max_prop, y_max_prop = get_plot_area_shape(
     x_coord, y_coord)
 
-get_3D_model(tif_file, x_min_prop, x_max_prop, y_min_prop, y_max_prop, address,
-             plot_surface)
+dsm_arr = get_cropped_area('DSM', tif_file, x_min_prop, x_max_prop, y_min_prop,
+                           y_max_prop)
+
+dtm_arr = get_cropped_area('DTM', tif_file, x_min_prop, x_max_prop, y_min_prop,
+                           y_max_prop)
+
+get_3D_model(dsm_arr, dtm_arr, address, plot_surface)

@@ -1,50 +1,17 @@
 import rasterio
-from rasterio.plot import show
-from matplotlib import pyplot as plt
 import pandas as pd
-import numpy as np
-from affine import Affine
-from pyproj import Proj, transform
 import plotly.graph_objects as go
 
 # Crop part of a TIF image --> this info should come from x,y coordinates of prop of interest
 #x_center = 104994.91
 #y_center = 192612.04
-"""
-# Method 2 of clipping a raster file
-N = 40
 
-with rasterio.open(
-        '/home/nemish/BeCode/BeCode_Projects/3d-houses/data/DHMVIIDSMRAS1m_k22.zip/GeoTIFF/DHMVIIDSMRAS1m_k22.tif'
-) as src:
-    px, py = src.index(x_center, y_center)
-    print(f'Pixel X, Y coordinates: {px, py}')
+# Clipping a raster file
 
-    window = rasterio.windows.Window(px - N // 2, py - N // 2, N, N)
-    print(window)
-
-    clip = src.read(1, window=window)
-
-# Faster way of generating 3D model. Don't need to save as a new TIF file.
-df = pd.DataFrame(clip)
-
-# Plot in 3D <-- see Method 2 in Playing with cropped image.py file.
-fig = go.Figure(data=[go.Surface(z=df.values)])
-fig.show()
-"""
-
-# Method 1 of clipping a raster file
-
-xmin = 218680.5 - 140
-xmax = 218680.5 + 140
-ymin = 179678.7 - 140
-ymax = 179678.7 + 140
-"""
-xmin = 178557.426
-xmax = 178558.870
-ymin = 176633.996
-ymax = 176640.996
-"""
+xmin = 152031.88 - 140
+xmax = 152031.88 + 140
+ymin = 172013.43 - 140
+ymax = 172013.43 + 140
 
 
 def window_from_extent(xmin, xmax, ymin, ymax, aff):
@@ -54,32 +21,16 @@ def window_from_extent(xmin, xmax, ymin, ymax, aff):
 
 
 with rasterio.open(
-        'data/DSM/DHMVIIDSMRAS1m_k25.zip/GeoTIFF/DHMVIIDSMRAS1m_k25.tif'
+        'data/DSM/DHMVIIDSMRAS1m_k31.zip/GeoTIFF/DHMVIIDSMRAS1m_k31.tif'
 ) as src:
     aff = src.transform
-    meta = src.meta.copy()
     window = window_from_extent(xmin, xmax, ymin, ymax, aff)
 
     # Read croped array
     arr = src.read(1, window=window)
 
-    # Update dataset metadata (if you need it)
-    meta.update(height=window[0][1] - window[0][0],
-                width=window[1][1] - window[1][0],
-                transform=src.window_transform(window))
-
-    # Remove transform key-value pair because the affine key already exists <-- not required
-    #meta.pop('transform', None)
-"""
-# Save arr in a new tif file
-
-with rasterio.open('Test.tif', 'w', **meta) as dst:
-    dst.write(arr, 1)
-"""
-
 # Faster way of generating 3D model. Don't need to save as a new TIF file.
 df = pd.DataFrame(arr)
-print(df)
 
 # Plot in 3D <-- see Method 2 in Playing with cropped image.py file.
 fig = go.Figure(data=[go.Surface(z=df.values)])
