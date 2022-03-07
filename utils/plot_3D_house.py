@@ -27,6 +27,8 @@ def get_xy_bounds_tif_files():
     """
     This function iterates over all the TIF files and creates a dictionary of the xy bounds of each file.
     """
+    xy_bounds_dict = dict()
+
     for i in range(1, 10):
         with rasterio.open(
                 f'data/DSM/DHMVIIDSMRAS1m_k0{i}.zip/GeoTIFF/DHMVIIDSMRAS1m_k0{i}.tif'
@@ -48,8 +50,10 @@ def get_xy_bounds_tif_files():
                 up_left[0], bot_right[0], bot_right[1], up_left[1]
             ]
 
+    return xy_bounds_dict
 
-def get_final_tif(x, y):
+
+def get_final_tif(xy_bounds_dict, x, y):
     """
     This function iterates over xy_bounds dict to find TIF file which contains xy coordinates of interest.
     """
@@ -110,23 +114,3 @@ def get_3D_model(dsm_arr, dtm_arr, address, plot_surface):
     fig.update_layout(
         title=f'Address: {address},   Plot surface: {plot_surface} m2')
     fig.show()
-
-
-address, x_coord, y_coord = get_prop_coord()
-
-xy_bounds_dict = dict()
-get_xy_bounds_tif_files()
-
-tif_file = get_final_tif(x_coord, y_coord)
-print('The TIF file for this property is: ', tif_file)
-
-plot_surface, x_min_prop, y_min_prop, x_max_prop, y_max_prop = get_plot_area_shape(
-    x_coord, y_coord)
-
-dsm_arr = get_cropped_area('DSM', tif_file, x_min_prop, x_max_prop, y_min_prop,
-                           y_max_prop)
-
-dtm_arr = get_cropped_area('DTM', tif_file, x_min_prop, x_max_prop, y_min_prop,
-                           y_max_prop)
-
-get_3D_model(dsm_arr, dtm_arr, address, plot_surface)
