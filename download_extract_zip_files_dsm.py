@@ -1,10 +1,12 @@
+from fileinput import filename
 from bs4 import BeautifulSoup
 import os, requests, zipfile
 from io import BytesIO
 
 html_page = requests.get(
-    'https://www.geopunt.be/download?container=dhm-vlaanderen-ii-dtm-raster-1m&title=Digitaal%20Hoogtemodel%20Vlaanderen%20II,%20DTM,%20raster,%201m'
+    'https://www.geopunt.be/download?container=dhm-vlaanderen-ii-dsm-raster-1m&title=Digitaal%20Hoogtemodel%20Vlaanderen%20II,%20DSM,%20raster,%201m'
 )
+
 soup = BeautifulSoup(html_page.content, 'html.parser')
 
 # Download all links
@@ -20,10 +22,10 @@ for i in range(len(all_links)):
     req = requests.get(all_links[i])
     filename = all_links[i].split('/')[-1]
     zip = zipfile.ZipFile(BytesIO(req.content))
-    zip.extractall(f'./data/DTM/{filename}')
+    zip.extractall(f'./data/{filename}')
 
 #Unzip zipped files within each folder
-dir_name = './data/DTM'
+dir_name = '/home/nemish/BeCode/BeCode_Projects/3d-houses/data'
 extension = '.zip'
 os.chdir(dir_name)
 
