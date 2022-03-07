@@ -6,10 +6,11 @@ import rasterio.mask
 import requests
 
 
-def get_prop_coord(address):
+def get_prop_coord():
     """
     Use user input address to find xy coordinates of property
     """
+    address = input('Enter your address: ')
     response = requests.get(f'https://loc.geopunt.be/v4/Location?q={address}')
 
     address_dict = response.json()
@@ -19,10 +20,7 @@ def get_prop_coord(address):
     y_coord = address_dict['LocationResult'][0]['BoundingBox']['LowerLeft'][
         'Y_Lambert72']
 
-    return x_coord, y_coord
-
-
-xy_bounds_dict = dict()
+    return address, x_coord, y_coord
 
 
 def get_xy_bounds_tif_files():
@@ -114,9 +112,9 @@ def get_3D_model(dsm_arr, dtm_arr, address, plot_surface):
     fig.show()
 
 
-address = input('Enter your address: ')
-x_coord, y_coord = get_prop_coord(address)
+address, x_coord, y_coord = get_prop_coord()
 
+xy_bounds_dict = dict()
 get_xy_bounds_tif_files()
 
 tif_file = get_final_tif(x_coord, y_coord)
