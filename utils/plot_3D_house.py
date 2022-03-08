@@ -3,24 +3,19 @@ import pandas as pd
 import plotly.graph_objects as go
 import rasterio
 import rasterio.mask
-import requests
+import streamlit as st
 
 
-def get_prop_coord():
+def get_prop_coord(address_dict):
     """
     Use user input address to find xy coordinates of property
     """
-    address = input('Enter your address: ')
-    response = requests.get(f'https://loc.geopunt.be/v4/Location?q={address}')
-
-    address_dict = response.json()
-
     x_coord = address_dict['LocationResult'][0]['BoundingBox']['LowerLeft'][
         'X_Lambert72']
     y_coord = address_dict['LocationResult'][0]['BoundingBox']['LowerLeft'][
         'Y_Lambert72']
 
-    return address, x_coord, y_coord
+    return x_coord, y_coord
 
 
 def get_xy_bounds_tif_files():
@@ -87,6 +82,9 @@ def get_plot_area_shape(x, y):
 
 def get_cropped_area(file_type, tif_file, x_min_prop, x_max_prop, y_min_prop,
                      y_max_prop):
+    """
+    This function is used to get the required cropped area from the specific DSM and DTM files.
+    """
     with rasterio.open(
             f'data/{file_type}/DHMVII{file_type}RAS1m_k{tif_file}.zip/GeoTIFF/DHMVII{file_type}RAS1m_k{tif_file}.tif'
     ) as src:
@@ -110,7 +108,18 @@ def get_3D_model(dsm_arr, dtm_arr, address, plot_surface):
     chm_arr = dsm_arr - dtm_arr
     df_cropped = pd.DataFrame(chm_arr)
 
-    fig = go.Figure(data=[go.Surface(z=df_cropped.values)])
-    fig.update_layout(
-        title=f'Address: {address},   Plot surface: {plot_surface} m2')
-    fig.show()
+    fig = go.Figure(
+        data=[go.Surface(z=df_cropped.values, colorscale='sunsetdark')])
+    fig.update_layout(scene=dict(xaxis=dict(showticklabels=False,
+                                            visible=False),
+                                 yaxis=dict(showticklabels=False,
+                                            visible=False),
+                                 zaxis=dict(showticklabels=False,
+                                            visible=False)),
+                      autosize=False,
+                      width=700,
+                      height=700)
+    fig.update_traces(showscale=False)
+    st.write('The address is: ', address)
+    st.write(f'The plot area is: {str(plot_surface)}m2')
+    st.plotly_chart(fig, use_container_width=False)
