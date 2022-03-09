@@ -1,4 +1,5 @@
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import rasterio
@@ -77,26 +78,34 @@ def get_plot_area_shape(x, y):
     y_max = df.geometry.bounds.iloc[0]['maxy']
 
     # Return surface of the plot area and the xy bounds of property
-    return plot_surface, x_min, y_min, x_max, y_max
+    return plot_surface, x_min, y_min, x_max, y_max, df.geometry
 
 
 def get_cropped_area(file_type, tif_file, x_min_prop, x_max_prop, y_min_prop,
-                     y_max_prop):
+                     y_max_prop, plot_polygon):
     """
     This function is used to get the required cropped area from the specific DSM and DTM files.
     """
     with rasterio.open(
             f'data/{file_type}/DHMVII{file_type}RAS1m_k{tif_file}.zip/GeoTIFF/DHMVII{file_type}RAS1m_k{tif_file}.tif'
     ) as src:
+        # Method 1 --> Does not plot attached properties properly
+        # row_start, col_start = src.index(x_min_prop, y_max_prop)
+        # row_stop, col_stop = src.index(x_max_prop, y_min_prop)
 
-        row_start, col_start = src.index(x_min_prop, y_max_prop)
-        row_stop, col_stop = src.index(x_max_prop, y_min_prop)
+        # window = ((int(row_start), int(row_stop)), (int(col_start),
+        #                                             int(col_stop)))
 
-        window = ((int(row_start), int(row_stop)), (int(col_start),
-                                                    int(col_stop)))
+        # # Read croped array
+        # arr = src.read(1, window=window)
 
-        # Read croped array
-        arr = src.read(1, window=window)
+        # Method 2 --> Does not plot ground features
+        arr, _ = rasterio.mask.mask(src,
+                                    plot_polygon,
+                                    crop=True,
+                                    nodata=None,
+                                    filled=True,
+                                    indexes=1)
 
         return arr
 
@@ -117,9 +126,48 @@ def get_3D_model(dsm_arr, dtm_arr, address, plot_surface):
                                  zaxis=dict(showticklabels=False,
                                             visible=False)),
                       autosize=False,
-                      width=700,
-                      height=700)
+                      width=800,
+                      height=800)
     fig.update_traces(showscale=False)
+
+    x_eye = -1.25
+    y_eye = 2
+    z_eye = 0.5
+
+    fig.update_layout(
+            scene_camera_eye=dict(x=x_eye, y=y_eye, z=z_eye),
+            updatemenus=[dict(type='buttons',
+                    showactive=False,
+                    y=1,
+                    x=0.8,
+                    xanchor='left',
+                    yanchor='bottom',
+                    pad=dict(t=45, r=10),
+                    buttons=[dict(label='Play',
+                                    method='animate',
+                                    args=[None, dict(frame=dict(duration=5, redraw=True), 
+                                                                transition=dict(duration=0),
+                                                                fromcurrent=True,
+                                                                mode='immediate'
+                                                                )]
+                                                )
+                                        ]
+                                )
+                            ]
+    )
+
+
+    def rotate_z(x, y, z, theta):
+        w = x+1j*y
+        return np.real(np.exp(1j*theta)*w), np.imag(np.exp(1j*theta)*w), z
+
+    frames=[]
+    for t in np.arange(0, 6.26, 0.1):
+        xe, ye, ze = rotate_z(x_eye, y_eye, z_eye, -t)
+        frames.append(go.Frame(layout=dict(scene_camera_eye=dict(x=xe, y=ye, z=ze))))
+    fig.frames=frames
+
     st.write('The address is: ', address)
     st.write(f'The plot area is: {str(plot_surface)}m2')
+
     st.plotly_chart(fig, use_container_width=False)
