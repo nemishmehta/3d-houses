@@ -38,6 +38,6 @@ if __name__ == '__main__':
 
             get_3D_model(dsm_arr, dtm_arr, address, plot_surface)
 
-            end = time.time()
+        end = time.time()
 
-            st.write(f"Execution time: {round(end-start, 2)}s.")
+        st.write(f"Execution time: {round(end-start, 2)}s.")
